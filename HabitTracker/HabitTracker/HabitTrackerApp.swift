@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct HabitTrackerApp: App {
+    let persistenceContainer = CoreDataManager.shared
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HabitListView()
+                .environment(\.managedObjectContext, persistenceContainer.context)
         }
     }
 }
