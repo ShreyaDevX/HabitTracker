@@ -26,7 +26,16 @@ class CoreDataManager {
     
     func save() {
         if context.hasChanges {
-            try? context.save()
+            print("Saving to context..")
+            do {
+                try context.save()
+                print("Saved Successfully!")
+                DispatchQueue.main.async {
+                    self.context.refreshAllObjects()  // Forces Core Data to re-fetch
+                }
+            } catch {
+                print("Failed to save context: \(error.localizedDescription)")
+            }
         }
     }
     

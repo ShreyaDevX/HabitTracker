@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AddHabitView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) var dismiss
     @State private var habitName = ""
 
     var body: some View {
@@ -23,6 +24,8 @@ struct AddHabitView: View {
                 newHabit.name = habitName
                 newHabit.streak = 0
                 try? viewContext.save()
+                
+                dismiss()
             }
             .padding()
         }

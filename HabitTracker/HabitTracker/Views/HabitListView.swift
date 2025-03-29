@@ -8,18 +8,24 @@
 import SwiftUI
 
 struct HabitListView: View {
-    @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(sortDescriptors: []) var habits: FetchedResults<Habit>
+    @Environment(\.managedObjectContext) var viewContext
+    
+    @FetchRequest(entity: Habit.entity(), sortDescriptors: []) var habits: FetchedResults<Habit>
+    
+    @State private var forceUpdate = false
+
     
     var body: some View {
         NavigationView {
             List {
-                ForEach(habits) { habit in
+                ForEach(habits, id: \.id) { habit in
+//                    HabitRowView(habit: habit) // ⛔️ Won't track updates when passed as plain refernece
                     HabitRowView(habit: habit)
                 }
                 .onDelete(perform: deleteHabit)
             }
             //.background(Color.blue)
+            .id(forceUpdate)
             .navigationTitle("Habits")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -28,10 +34,12 @@ struct HabitListView: View {
             }
 
         }
+        .onAppear {
+            forceUpdate.toggle()
+        }
+     
     }
-    
-    
-    
+        
     func deleteHabit(at offsets: IndexSet) {
         for index in offsets {
             viewContext.delete(habits[index])
