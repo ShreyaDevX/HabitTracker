@@ -28,5 +28,37 @@ class CoreDataManager {
         if context.hasChanges {
             try? context.save()
         }
-    } 
+    }
+    
+    // - CRUD operations
+    
+    func addHabit(name: String) {
+        let newHabit = Habit(context: context)
+        newHabit.id = UUID()
+        newHabit.name = name
+        newHabit.streak = 0
+        save()
+    }
+    
+    func fetchHabits() -> [Habit] {
+        let request: NSFetchRequest<Habit> = Habit.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Habit.streak, ascending: false)]
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Failed to fetch habits: \(error)")
+            return []
+        }
+    }
+    
+    func updateStreak(for habit: Habit) {
+        habit.streak += 1
+        save()
+    }
+    
+    func deleteHabit(_ habit: Habit) {
+        context.delete(habit)
+        save()
+    }
+
 }
