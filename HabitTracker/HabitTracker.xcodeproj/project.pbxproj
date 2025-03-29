@@ -10,9 +10,23 @@
 		1A6B62242D97821A009817BC /* HabitTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HabitTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1A6B62922D983802009817BC /* Exceptions for "HabitTracker" folder in "HabitTracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Core Data/Category+CoreDataClass.swift",
+				"Core Data/Category+CoreDataProperties.swift",
+			);
+			target = 1A6B62232D97821A009817BC /* HabitTracker */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1A6B62262D97821A009817BC /* HabitTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1A6B62922D983802009817BC /* Exceptions for "HabitTracker" folder in "HabitTracker" target */,
+			);
 			path = HabitTracker;
 			sourceTree = "<group>";
 		};
