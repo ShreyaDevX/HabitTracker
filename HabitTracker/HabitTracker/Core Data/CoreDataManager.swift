@@ -31,7 +31,6 @@ class CoreDataManager {
     }
     
     // - CRUD operations
-    
     func addHabit(name: String) {
         let newHabit = Habit(context: context)
         newHabit.id = UUID()
@@ -42,13 +41,8 @@ class CoreDataManager {
     
     func fetchHabits() -> [Habit] {
         let request: NSFetchRequest<Habit> = Habit.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \Habit.streak, ascending: false)]
-        do {
-            return try context.fetch(request)
-        } catch {
-            print("Failed to fetch habits: \(error)")
-            return []
-        }
+        let habits = try? context.fetch(request)
+        return habits ?? []
     }
     
     func updateStreak(for habit: Habit) {
