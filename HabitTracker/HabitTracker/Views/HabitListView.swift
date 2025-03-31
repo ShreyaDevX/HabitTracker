@@ -42,6 +42,9 @@ struct HabitListView: View {
                             ForEach(filteredHabits(for: category)) { habit in
                                 HabitRowView(habit: habit)
                             }
+                            .onDelete { indices in
+                                deleteHabit(for: category, at: indices)
+                            }
                         }
                     }
                 }.listStyle(GroupedListStyle())
@@ -62,12 +65,13 @@ struct HabitListView: View {
      
     }
         
-//    func deleteHabit(at offsets: IndexSet) {
-//        for index in offsets {
-//            viewContext.delete(habits[index])
-//        }
-//        try? viewContext.save()
-//    }
+    func deleteHabit(for category: Category, at offsets: IndexSet) {
+        for index in offsets {
+            let habit = filteredHabits(for: category)[index]
+            viewContext.delete(habit)
+        }
+        try? viewContext.save()
+    }
     
     private var filteredCategories: [Category] {
            if let selectedCategory = selectedCategory {
