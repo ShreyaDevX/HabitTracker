@@ -63,5 +63,17 @@ class CoreDataManager {
         context.delete(habit)
         save()
     }
+    
+    func fetchHabits(by category: Category) -> [Habit] {
+        let request: NSFetchRequest<Habit> = Habit.fetchRequest()
+        request.predicate = NSPredicate(format: "category == %@", category)
+        do {
+            let habits = try context.fetch(request)
+            return habits
+        } catch {
+            print("Failed to fetch habits: \(error)")
+            return []
+        }
+    }
 
 }
