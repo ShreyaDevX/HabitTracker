@@ -12,24 +12,26 @@ struct HabitRowView: View {
     @ObservedObject var habit: Habit // USe as ObservedObject else it wont work if it is just a var property. Since Habit is an NSManagedObject, it already conforms to ObservableObject internally. This means SwiftUI can track its changes only if we use @ObservedObject in the subview. Reason below
     
     var body: some View {
-        HStack {
-            Text(habit.name ?? "Unknown")
-            Spacer()
-            Text("Streak: \(habit.streak)")
-            
-            Button {
-                DispatchQueue.main.async {
-                    updateStreak(for: habit)
+        NavigationLink(destination: EditHabitView(habit: habit)) {
+            HStack {
+                Text(habit.name ?? "Unknown")
+                Spacer()
+                Text("Streak: \(habit.streak)")
+                
+                Button {
+                    DispatchQueue.main.async {
+                        updateStreak(for: habit)
+                    }
+                    
+                } label: {
+                    Text("Increase Streak")
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                 }
                 
-            } label: {
-                Text("Increase Streak")
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
             }
-
         }
     }
     
