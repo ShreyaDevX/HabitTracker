@@ -15,22 +15,42 @@ struct HabitListView: View {
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Category.name, ascending: true)]) var categories: FetchedResults<Category>
     
     @State private var selectedCategory: Category?
+    @State private var sortOption: SortOption = .name
     
     var body: some View {
         
         NavigationView {
-            
-            List {
-                ForEach(categories, id: \.id) { category in
-                    Section(header: Text(category.name ?? "Uncategorized").bold()) {
-                        ForEach(category.habitsArray,id: \.id) { habit in
-                    // HabitRowView(habit: habit) // ⛔️ Won't track updates when passed as plain refernece
-                            HabitRowView(habit: habit)
+            VStack {
+                HStack {
+                    Picker("Filter", selection: $selectedCategory) {
+                        Text("All").tag(nil as Category?)
+                        ForEach(categories) { category in
+                            Text(category.name ?? "Unknown").tag(category as Category?)
                         }
                     }
+                    
+                    Picker("Sort by", selection: $sortOption) {
+                        Text("Name").tag(SortOption.name)
+                        Text("Streak").tag(SortOption.streak)
+                    }
                 }
-//               .onDelete(perform: deleteHabit)
+                
+                List {
+    //                ForEach(categories, id: \.id) { category in
+    //                    Section(header: Text(category.name ?? "Uncategorized").bold()) {
+    //                        ForEach(category.habitsArray,id: \.id) { habit in
+    //                    // HabitRowView(habit: habit) // ⛔️ Won't track updates when passed as plain refernece
+    //                            HabitRowView(habit: habit)
+    //                        }
+    //                    }
+    //                }
+                    
+                    ForEach(filteredHabits) { habit in
+                        HabitRowView(habit: habit)
+                    }
+                }
             }
+            
             .navigationTitle("Habits")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -52,6 +72,22 @@ struct HabitListView: View {
 //        }
 //        try? viewContext.save()
 //    }
+    
+    private var filteredHabits: [Habit] {
+            let allHabits = categories.flatMap { $0.habitsArray }
+            
+            let filtered = selectedCategory != nil
+                ? allHabits.filter { $0.category == selectedCategory }
+                : allHabits
+            
+            return sortOption == .name
+                ? filtered.sorted { ($0.name ?? "") < ($1.name ?? "") }
+                : filtered.sorted { $0.streak > $1.streak }
+        }
+    
+    enum SortOption {
+        case name, streak
+    }
     
     func addSampleData() {
         print("addSampleData called")
