@@ -64,6 +64,29 @@ class CoreDataManager {
         save()
     }
     
+    
+    // ✅ Add a Category
+    func addCategory(name: String) {
+        let category = Category(context: context)
+        category.id = UUID()
+    }
+    
+    func fetchCategories()-> [Category] {
+        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        let categories = try? context.fetch(request)
+        return categories ?? []
+    }
+    
+    // ✅ Assign Habit to Category
+       func addHabit(name: String, category: Category?) {
+           let newHabit = Habit(context: context)
+           newHabit.id = UUID()
+           newHabit.name = name
+           newHabit.streak = 0
+           newHabit.category = category  // ✅ Assign Category
+           save()
+       }
+    
     func fetchHabits(by category: Category) -> [Habit] {
         let request: NSFetchRequest<Habit> = Habit.fetchRequest()
         request.predicate = NSPredicate(format: "category == %@", category)

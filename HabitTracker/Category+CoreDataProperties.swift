@@ -2,7 +2,7 @@
 //  Category+CoreDataProperties.swift
 //  HabitTracker
 //
-//  Created by Shreya Pallan on 30/03/25.
+//  Created by Shreya Pallan on 31/03/25.
 //
 //
 
@@ -17,6 +17,7 @@ extension Category {
     }
 
     @NSManaged public var name: String?
+    @NSManaged public var id: UUID?
     @NSManaged public var habits: NSSet?
 
 }
