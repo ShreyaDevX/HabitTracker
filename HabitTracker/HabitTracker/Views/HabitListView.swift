@@ -36,19 +36,15 @@ struct HabitListView: View {
                 }
                 
                 List {
-    //                ForEach(categories, id: \.id) { category in
-    //                    Section(header: Text(category.name ?? "Uncategorized").bold()) {
-    //                        ForEach(category.habitsArray,id: \.id) { habit in
-    //                    // HabitRowView(habit: habit) // ⛔️ Won't track updates when passed as plain refernece
-    //                            HabitRowView(habit: habit)
-    //                        }
-    //                    }
-    //                }
-                    
-                    ForEach(filteredHabits) { habit in
-                        HabitRowView(habit: habit)
+                    ForEach(filteredCategories) { category in
+                        Section(header: Text(category.name ?? "Uncategorized").bold()) {
+                            // For each category, filter and sort habits
+                            ForEach(filteredHabits(for: category)) { habit in
+                                HabitRowView(habit: habit)
+                            }
+                        }
                     }
-                }
+                }.listStyle(GroupedListStyle())
             }
             
             .navigationTitle("Habits")
@@ -73,12 +69,21 @@ struct HabitListView: View {
 //        try? viewContext.save()
 //    }
     
-    private var filteredHabits: [Habit] {
-            let allHabits = categories.flatMap { $0.habitsArray }
+    private var filteredCategories: [Category] {
+           if let selectedCategory = selectedCategory {
+               return [selectedCategory]  // Only the selected category
+           } else {
+               return categories.filter { !$0.habitsArray.isEmpty }  // All categories with habits
+           }
+       }
+    
+    private func filteredHabits(for category: Category) -> [Habit] {
+        let allHabits = category.habitsArray
             
-            let filtered = selectedCategory != nil
-                ? allHabits.filter { $0.category == selectedCategory }
-                : allHabits
+        let filtered = allHabits.filter { habit in
+            // Return filtered habits if category is selected or all habits if not
+            return selectedCategory == nil || habit.category == selectedCategory
+        }
             
             return sortOption == .name
                 ? filtered.sorted { ($0.name ?? "") < ($1.name ?? "") }
