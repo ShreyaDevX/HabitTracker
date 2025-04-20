@@ -56,7 +56,7 @@ struct HabitListView: View {
                 HStack {
                     Button("Increase Streak for All in Category") {
                         DispatchQueue.main.async {
-                            increaseStreakForCategry()
+                            increaseStreakForCategory()
                         }
                     }
                     
@@ -269,7 +269,7 @@ extension HabitListView {
 
 extension HabitListView {
     
-    func increaseStreakForCategry() {
+    func increaseStreakForCategory() {
         guard let selectedCategory = selectedCategory else { return }
         
         let request = NSBatchUpdateRequest(entityName: "Habit")
