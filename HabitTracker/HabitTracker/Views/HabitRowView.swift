@@ -9,7 +9,7 @@ import SwiftUI
 
 struct HabitRowView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @ObservedObject var habit: Habit // USe as ObservedObject else it wont work if it is just a var property. Since Habit is an NSManagedObject, it already conforms to ObservableObject internally. This means SwiftUI can track its changes only if we use @ObservedObject in the subview. Reason below
+    @ObservedObject var habit: Habit // Use as ObservedObject else it wont work if it is just a var property. Since Habit is an NSManagedObject, it already conforms to ObservableObject internally. This means SwiftUI can track its changes only if we use @ObservedObject in the subview. Reason below
     
     var body: some View {
             HStack {

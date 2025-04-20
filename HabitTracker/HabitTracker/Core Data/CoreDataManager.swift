@@ -83,6 +83,7 @@ class CoreDataManager {
            newHabit.id = UUID()
            newHabit.name = name
            newHabit.streak = 0
+           newHabit.dateCreated = Date()
            newHabit.category = category  // ✅ Assign Category
            save()
        }

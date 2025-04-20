@@ -39,15 +39,31 @@ struct HabitListView: View {
                     ForEach(filteredCategories) { category in
                         Section(header: Text(category.name ?? "Uncategorized").bold()) {
                             // For each category, filter and sort habits
-                            ForEach(filteredHabits(for: category)) { habit in
-                                HabitRowView(habit: habit)
-                            }
-                            .onDelete { indices in
-                                deleteHabit(for: category, at: indices)
-                            }
+                           
+                                let habits = filteredHabits(for: category)
+                            ForEach(habits, id: \.objectID) { habit in
+                                    HabitRowView(habit: habit)
+                                }
+                                .onDelete { indices in
+                                    deleteHabit(for: category, at: indices)
+                                }
+                            
+                            
                         }
                     }
                 }.listStyle(GroupedListStyle())
+                
+                HStack {
+                    Button("Increase Streak for All in Category") {
+                        DispatchQueue.main.async {
+                            increaseStreakForCategry()
+                        }
+                    }
+                    
+                    Button("Delete Habits Older Than 6 Months") {
+                        
+                    }
+                }
             }
             
             .navigationTitle("Habits")
@@ -64,7 +80,8 @@ struct HabitListView: View {
         }
      
     }
-        
+       
+    
     func deleteHabit(for category: Category, at offsets: IndexSet) {
         for index in offsets {
             let habit = filteredHabits(for: category)[index]
@@ -248,4 +265,42 @@ extension HabitListView {
             }
         }
     }
+}
+
+extension HabitListView {
+    
+    func increaseStreakForCategry() {
+        guard let selectedCategory = selectedCategory else { return }
+        
+        let request = NSBatchUpdateRequest(entityName: "Habit")
+        
+        // Predicate to match habits with the selected category
+        request.predicate = NSPredicate(format: "category == %@", selectedCategory.objectID)
+        
+        // Create expression to increment streak by 1
+        let streakKeyPath = NSExpression(forKeyPath: "streak")
+        let one = NSExpression(forConstantValue: 1)
+        let incrementExpression = NSExpression(forFunction: "add:to:", arguments: [streakKeyPath, one])
+        
+        request.propertiesToUpdate = ["streak": incrementExpression]
+        request.resultType = .updatedObjectIDsResultType
+        
+        do {
+            let result = try viewContext.execute(request) as? NSBatchUpdateResult
+            if let objectIDs = result?.result as? [NSManagedObjectID] {
+                for objectID in objectIDs {
+                    // ✅ Merge changes to inform SwiftUI/UIContext
+                    let changes: [AnyHashable: Any] = [NSUpdatedObjectsKey: objectIDs]
+                    NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [viewContext])
+                }
+                    }
+            try viewContext.save()
+            print("Streaks incremented for habits in category: \(selectedCategory.name ?? "")")
+        } catch {
+            print("Failed to batch update streaks: \(error.localizedDescription)")
+        }
+        
+    }
+    
+    
 }
