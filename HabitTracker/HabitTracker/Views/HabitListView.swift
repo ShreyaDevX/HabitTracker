@@ -14,7 +14,7 @@ struct HabitListView: View {
 //    @FetchRequest(entity: Habit.entity(), sortDescriptors: []) var habits: FetchedResults<Habit>
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Category.name, ascending: true)]) var categories: FetchedResults<Category>
     
-    @State private var selectedCategory: Category?
+    @State private var selectedCategory: Category? = nil
     @State private var sortOption: SortOption = .name
     
     var body: some View {
@@ -55,13 +55,20 @@ struct HabitListView: View {
                 
                 HStack {
                     Button("Increase Streak for All in Category") {
-                        DispatchQueue.main.async {
-                            increaseStreakForCategory()
+                        
+                        if let selectedCategory = selectedCategory {
+                            DispatchQueue.main.async {
+                                CoreDataManager.shared.increaseStreakForCategory(in: selectedCategory)
+                            }
                         }
                     }
                     
                     Button("Delete Habits Older Than 6 Months") {
-                        
+                        if selectedCategory != nil {
+                            DispatchQueue.main.async {
+                                CoreDataManager.shared.deleteOldHabits()
+                            }
+                        }
                     }
                 }
             }
@@ -81,7 +88,6 @@ struct HabitListView: View {
      
     }
        
-    
     func deleteHabit(for category: Category, at offsets: IndexSet) {
         for index in offsets {
             let habit = filteredHabits(for: category)[index]
@@ -267,40 +273,3 @@ extension HabitListView {
     }
 }
 
-extension HabitListView {
-    
-    func increaseStreakForCategory() {
-        guard let selectedCategory = selectedCategory else { return }
-        
-        let request = NSBatchUpdateRequest(entityName: "Habit")
-        
-        // Predicate to match habits with the selected category
-        request.predicate = NSPredicate(format: "category == %@", selectedCategory.objectID)
-        
-        // Create expression to increment streak by 1
-        let streakKeyPath = NSExpression(forKeyPath: "streak")
-        let one = NSExpression(forConstantValue: 1)
-        let incrementExpression = NSExpression(forFunction: "add:to:", arguments: [streakKeyPath, one])
-        
-        request.propertiesToUpdate = ["streak": incrementExpression]
-        request.resultType = .updatedObjectIDsResultType
-        
-        do {
-            let result = try viewContext.execute(request) as? NSBatchUpdateResult
-            if let objectIDs = result?.result as? [NSManagedObjectID] {
-                for objectID in objectIDs {
-                    // ✅ Merge changes to inform SwiftUI/UIContext
-                    let changes: [AnyHashable: Any] = [NSUpdatedObjectsKey: objectIDs]
-                    NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [viewContext])
-                }
-                    }
-            try viewContext.save()
-            print("Streaks incremented for habits in category: \(selectedCategory.name ?? "")")
-        } catch {
-            print("Failed to batch update streaks: \(error.localizedDescription)")
-        }
-        
-    }
-    
-    
-}
