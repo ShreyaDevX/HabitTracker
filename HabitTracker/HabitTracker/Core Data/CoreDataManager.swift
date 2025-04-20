@@ -165,5 +165,20 @@ extension CoreDataManager {
         
     }
     
+    func fetchCategoriesWithHabitsPrefetched() -> [Category] {
+        
+        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Category.name, ascending: true)]
+        // same as @FetchRequests in View
+        request.relationshipKeyPathsForPrefetching = ["habits"] // 👈 prefetch habits
+
+        do {
+                return try context.fetch(request)
+            } catch {
+                print("Failed to fetch with prefetching: \(error)")
+                return []
+            }
+        
+    }
     
 }

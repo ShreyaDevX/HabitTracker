@@ -11,8 +11,15 @@ import CoreData
 struct HabitListView: View {
     @Environment(\.managedObjectContext) var viewContext
     
-//    @FetchRequest(entity: Habit.entity(), sortDescriptors: []) var habits: FetchedResults<Habit>
-    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Category.name, ascending: true)]) var categories: FetchedResults<Category>
+
+   /* @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Category.name, ascending: true)]) var categories: FetchedResults<Category> */
+    //1. This will auto-fetch and re-render your UI when changes occur.
+    
+    //2. But it doesn’t let you configure prefetching, hence the risk of lazy loading causing N+1 when you loop over category.habits.
+    
+    //3. Comment it for prefetching as you cannot set up @FetchRequest for Pre Fetching. Use @State categories for prefetching instead of @FetchRequest
+    
+    @State private var categories: [Category] = []
     
     @State private var selectedCategory: Category? = nil
     @State private var sortOption: SortOption = .name
@@ -42,6 +49,7 @@ struct HabitListView: View {
                            
                                 let habits = filteredHabits(for: category)
                             ForEach(habits, id: \.objectID) { habit in
+                                
                                     HabitRowView(habit: habit)
                                 }
                                 .onDelete { indices in
@@ -81,8 +89,13 @@ struct HabitListView: View {
             }
             .onAppear {
                 //deleteAllData()
-                addSampleData()
+//                addSampleData()
                // removeDuplicateCategories()
+//                CoreDataManager.shared.fetchHabits() //  So What’s fetchHabits() Doing in onAppear?
+//                Right now? Nothing functional — it's just fetching habits and discarding the result. Since your UI doesn’t depend on them directly, removing this won’t change anything.
+                categories = CoreDataManager.shared.fetchCategoriesWithHabitsPrefetched()
+                
+                
             }
         }
      
@@ -225,12 +238,10 @@ struct HabitListView: View {
         }
 }
 
-
-
-
 // ✅ Extension to Convert Habit Set to Array
 extension Category {
     var habitsArray: [Habit] {
+        
         let set = habits as? Set<Habit> ?? []
         return set.sorted { $0.name ?? "" < $1.name ?? "" }
     }
