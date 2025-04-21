@@ -11,15 +11,15 @@ import CoreData
 struct HabitListView: View {
     @Environment(\.managedObjectContext) var viewContext
     
-
    /* @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Category.name, ascending: true)]) var categories: FetchedResults<Category> */
     //1. This will auto-fetch and re-render your UI when changes occur.
     
     //2. But it doesn’t let you configure prefetching, hence the risk of lazy loading causing N+1 when you loop over category.habits.
     
     //3. Comment it for prefetching as you cannot set up @FetchRequest for Pre Fetching. Use @State categories for prefetching instead of @FetchRequest
-    
+        
     @State private var categories: [Category] = []
+    @State private var allHabits: [Habit] = []
     
     @State private var selectedCategory: Category? = nil
     @State private var sortOption: SortOption = .name
@@ -49,13 +49,11 @@ struct HabitListView: View {
                            
                                 let habits = filteredHabits(for: category)
                             ForEach(habits, id: \.objectID) { habit in
-                                
                                     HabitRowView(habit: habit)
                                 }
                                 .onDelete { indices in
                                     deleteHabit(for: category, at: indices)
                                 }
-                            
                             
                         }
                     }
@@ -78,6 +76,13 @@ struct HabitListView: View {
                             }
                         }
                     }
+                    
+                    Button("Add 10 Habits in Background") {
+                        if let selectedCategory = selectedCategory {
+                            CoreDataManager.shared.addSampleHabitsInBackground(to: selectedCategory)
+                        }
+                    }
+                    
                 }
             }
             
@@ -94,42 +99,72 @@ struct HabitListView: View {
 //                CoreDataManager.shared.fetchHabits() //  So What’s fetchHabits() Doing in onAppear?
 //                Right now? Nothing functional — it's just fetching habits and discarding the result. Since your UI doesn’t depend on them directly, removing this won’t change anything.
                 categories = CoreDataManager.shared.fetchCategoriesWithHabitsPrefetched()
-                
-                
+                allHabits = CoreDataManager.shared.fetchHabits()
+
             }
         }
      
     }
        
     func deleteHabit(for category: Category, at offsets: IndexSet) {
-        for index in offsets {
-            let habit = filteredHabits(for: category)[index]
+        let habits = filteredHabits(for: category)
+        
+        offsets.forEach { index in
+            let habit = habits[index]
             viewContext.delete(habit)
+            
+            // 🔥 Immediately remove from local list
+            if let idx = allHabits.firstIndex(of: habit) {
+                allHabits.remove(at: idx)
+            }
         }
-        try? viewContext.save()
+        
+        do {
+            try viewContext.save()
+            // Refresh categories + habits
+            
+            DispatchQueue.main.async {
+                categories = CoreDataManager.shared.fetchCategoriesWithHabitsPrefetched()
+            }
+        } catch {
+            print("Failed to delete: \(error)")
+        }
+        
     }
     
     private var filteredCategories: [Category] {
-           if let selectedCategory = selectedCategory {
-               return [selectedCategory]  // Only the selected category
-           } else {
-               return categories.filter { !$0.habitsArray.isEmpty }  // All categories with habits
-           }
-       }
+        if let selectedCategory = selectedCategory {
+            return [selectedCategory]  // Only the selected category
+        } else {
+            return categories.filter { !$0.habitsArray.isEmpty }  // All categories with habits
+        }
+    }
+    
+//    private func filteredHabits(for category: Category) -> [Habit] {
+//        let allHabits = category.habitsArray
+//            
+//        let filtered = allHabits.filter { habit in
+//            // Return filtered habits if category is selected or all habits if not
+//            return selectedCategory == nil || habit.category == selectedCategory
+//        }
+//            
+//            return sortOption == .name
+//                ? filtered.sorted { ($0.name ?? "") < ($1.name ?? "") }
+//                : filtered.sorted { $0.streak > $1.streak }
+//        }
     
     private func filteredHabits(for category: Category) -> [Habit] {
-        let allHabits = category.habitsArray
-            
-        let filtered = allHabits.filter { habit in
-            // Return filtered habits if category is selected or all habits if not
-            return selectedCategory == nil || habit.category == selectedCategory
-        }
-            
-            return sortOption == .name
-                ? filtered.sorted { ($0.name ?? "") < ($1.name ?? "") }
-                : filtered.sorted { $0.streak > $1.streak }
-        }
-    
+        let categoryHabits = allHabits.filter { $0.category == category }
+        
+        let filtered = selectedCategory == nil
+        ? categoryHabits
+        : categoryHabits.filter { $0.category == selectedCategory }
+        
+        return sortOption == .name
+        ? filtered.sorted { ($0.name ?? "") < ($1.name ?? "") }
+        : filtered.sorted { $0.streak > $1.streak }
+    }
+
     enum SortOption {
         case name, streak
     }

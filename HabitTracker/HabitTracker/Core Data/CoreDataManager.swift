@@ -182,3 +182,47 @@ extension CoreDataManager {
     }
     
 }
+
+
+extension CoreDataManager {
+    func addSampleHabitsInBackground(to category: Category) {
+        
+        container.performBackgroundTask { backgroundContext in
+            let categoryInContext = backgroundContext.object(with: category.objectID) as? Category
+            
+            for i in 1...10 {
+                let habit = Habit(context: backgroundContext)
+                habit.id = UUID()
+                habit.name = "Background Habit \(i)"
+                habit.streak = Int16(i)
+                habit.dateCreated = Date()
+                habit.category = categoryInContext
+                //1. Why can't we set habit.category = category directly?
+
+            }
+            
+            do {
+                try backgroundContext.save()
+                DispatchQueue.main.async {
+                    // ✅ Merge changes to inform SwiftUI/UIContext
+                    let changes: [AnyHashable: Any] = [NSUpdatedObjectsKey: category.objectID]
+                    
+                    NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [CoreDataManager.shared.context])
+                }
+                print("✅ Successfully added 10 habits in background for category: \(category.name ?? "")")
+            } catch {
+                print("❌ Failed to save background habits: \(error.localizedDescription)")
+            }
+        }
+    }
+}
+
+
+
+/* 1.  In Core Data, each NSManagedObjectContext (MOC) has its own thread or queue.
+
+  The main context (UI context) runs on the main thread, while the background context runs on a background thread.
+
+  If you try to access a managed object (like a Category) from one context (e.g., main) in another context (e.g., background), Core Data will throw an exception. This is because Core Data ensures thread safety and prevents you from modifying objects in an invalid context.
+  
+  In Background Context: If you want to work with those objects in a background context, you need to fetch the object by its objectID in the background context using object(with:). */
